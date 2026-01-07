@@ -1,0 +1,2 @@
+# hyprcook
+Hyprland management tool
