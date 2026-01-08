@@ -1,0 +1,4 @@
+#!/bin/bash
+
+exec "$HYPRCOOK_HOME/env/bin/python" \
+     "$HYPRCOOK_HOME/src/main.py" "$@"

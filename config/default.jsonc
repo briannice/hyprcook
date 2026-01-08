@@ -1,0 +1,14 @@
+{
+  "display": {
+    "modes": {
+      "laptop": [
+        { "name": "eDP-1", "state": "on", "scale": 1.5 },
+        { "name": "HDMI-A-1", "state": "off" }
+      ],
+      "smon": [
+        { "name": "eDP-1", "state": "off" },
+        { "name": "HDMI-A-1", "state": "on" }
+      ]
+    }
+  }
+}
