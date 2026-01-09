@@ -20,3 +20,7 @@ def set_monitor_on(
 
 def set_monitor_off(name: str) -> None:
     os.system(f"hyprctl keyword monitor {name},disable")
+
+
+def set_monitor_defaults() -> None:
+    set_monitor_on("")

@@ -12,34 +12,29 @@ MonitorPosition = str
 MonitorScale = float
 
 
-class MonitorState(StrEnum):
+class MonitorModeConfigState(StrEnum):
     ON = "on"
     OFF = "off"
 
 
-class MonitorConfig(TypedDict):
+class MonitorModeConfig(TypedDict):
     name: MonitorName
-    state: MonitorState
+    state: MonitorModeConfigState
     resolution: Optional[MonitorResolution]
     position: Optional[MonitorPosition]
     scale: Optional[MonitorScale]
 
 
-# --------------------------------------------------------------------------------------
-# Display
-# --------------------------------------------------------------------------------------
-
-
-class DisplayMode(StrEnum):
+class MonitorModeId(StrEnum):
     LAPTOP = "laptop"
     SINGLE_MONITOR = "smon"
 
 
-DisplayModeConfig = Dict[DisplayMode, List[MonitorConfig]]
+MonitorModeSettings = Dict[MonitorModeId, List[MonitorModeConfig]]
 
 
-class DisplayConfig(TypedDict):
-    modes: DisplayModeConfig
+class MonitorSettings(TypedDict):
+    mode: MonitorModeSettings
 
 
 # --------------------------------------------------------------------------------------
@@ -47,10 +42,5 @@ class DisplayConfig(TypedDict):
 # --------------------------------------------------------------------------------------
 
 
-class AppName(StrEnum):
-    NOTIFY = "notify"
-    DISPLAY = "display"
-
-
-class AppConfig(TypedDict):
-    display: DisplayConfig
+class AppSettings(TypedDict):
+    monitor: MonitorSettings

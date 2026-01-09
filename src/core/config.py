@@ -4,11 +4,11 @@ import sys
 
 from pathlib import Path
 
-from core.types import AppConfig, DisplayConfig, DisplayModeConfig
+from core.types import AppSettings, MonitorModeSettings, MonitorSettings
 
 
 CONFIG_DIR = "config"
-CONFIG_FILE_NAMES = ["default.jsonc"]
+CONFIG_FILE_NAMES = ["default.jsonc", "default.json"]
 
 
 def get_config_path() -> Path:
@@ -35,19 +35,19 @@ def get_config_path() -> Path:
     sys.exit("Configuration file does not exist.")
 
 
-def read_app_config() -> AppConfig:
+def read_app_settings() -> AppSettings:
     config_path = get_config_path()
 
     with open(config_path) as config_file:
-        config: AppConfig = json.load(config_file)
-        return config
+        settings: AppSettings = json.load(config_file)
+        return settings
 
 
-def read_display_config() -> DisplayConfig:
-    app_config = read_app_config()
-    return app_config.get("display")
+def read_monitor_settings() -> MonitorSettings:
+    app_settings = read_app_settings()
+    return app_settings.get("monitor")
 
 
-def read_display_modes_config() -> DisplayModeConfig:
-    display_config = read_display_config()
-    return display_config.get("modes")
+def read_monitor_mode_settings() -> MonitorModeSettings:
+    monitor_settings = read_monitor_settings()
+    return monitor_settings.get("mode")
