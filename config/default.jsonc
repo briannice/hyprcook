@@ -1,6 +1,6 @@
 {
-  "monitor": {
-    "mode": {
+  "monitors": {
+    "modes": {
       "laptop": [
         { "name": "eDP-1", "state": "on", "scale": 1.5 },
         { "name": "HDMI-A-1", "state": "off" }
@@ -9,6 +9,7 @@
         { "name": "eDP-1", "state": "off" },
         { "name": "HDMI-A-1", "state": "on" }
       ]
-    }
+    },
+    "default": "laptop"
   }
 }

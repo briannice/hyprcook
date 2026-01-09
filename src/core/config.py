@@ -2,16 +2,37 @@ import json
 import os
 import sys
 
+from enum import StrEnum
 from pathlib import Path
+from typing import Dict, List, Optional, TypedDict
 
-from core.types import AppSettings, MonitorModeSettings, MonitorSettings
+
+class StatusEnum(StrEnum):
+    ON = "on"
+    OFF = "off"
 
 
-CONFIG_DIR = "config"
-CONFIG_FILE_NAMES = ["default.jsonc", "default.json"]
+class MonitorConfigModeConfig(TypedDict):
+    name: str
+    state: StatusEnum
+    resolution: Optional[str]
+    position: Optional[str]
+    scale: Optional[float]
+
+
+class MonitorConfig(TypedDict):
+    modes: Dict[str, List[MonitorConfigModeConfig]]
+    default: str
+
+
+class AppConfig(TypedDict):
+    monitors: MonitorConfig
 
 
 def get_config_path() -> Path:
+    CONFIG_DIR = "config"
+    CONFIG_FILE_NAMES = ["default.jsonc", "default.json"]
+
     runtime_dir = os.getenv("HYPRCOOK_HOME")
 
     if runtime_dir is None:
@@ -35,19 +56,14 @@ def get_config_path() -> Path:
     sys.exit("Configuration file does not exist.")
 
 
-def read_app_settings() -> AppSettings:
+def read_app_config() -> AppConfig:
     config_path = get_config_path()
 
     with open(config_path) as config_file:
-        settings: AppSettings = json.load(config_file)
-        return settings
+        config: AppConfig = json.load(config_file)
+        return config
 
 
-def read_monitor_settings() -> MonitorSettings:
-    app_settings = read_app_settings()
-    return app_settings.get("monitor")
-
-
-def read_monitor_mode_settings() -> MonitorModeSettings:
-    monitor_settings = read_monitor_settings()
-    return monitor_settings.get("mode")
+def read_monitor_config() -> MonitorConfig:
+    app_config = read_app_config()
+    return app_config.get("monitors")
