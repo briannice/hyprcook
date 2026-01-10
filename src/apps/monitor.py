@@ -1,9 +1,9 @@
-import sys
 import typer
 
-from core.config import StatusEnum, read_monitor_config
+from core.base import StatusEnum
+from core.config import Config
 from core.state import read_monitor_state, write_monitor_state
-from services.monitors import set_monitor_defaults, set_monitor_off, set_monitor_on
+from services.monitors import set_monitor_off, set_monitor_on
 
 
 app = typer.Typer(name="monitors")
@@ -11,15 +11,11 @@ app = typer.Typer(name="monitors")
 
 @app.command(name="mode")
 def mode(mode_id: str) -> None:
-    monitor_config = read_monitor_config()
-    monitor_modes = monitor_config.get("modes").get(mode_id)
+    config = Config()
+    monitor_configs = config.get_monitor_mode_configs(mode_id)
+    monitor_configs.sort(key=lambda x: x.get("state"), reverse=True)
 
-    if monitor_modes is None:
-        sys.exit(f"Display mode {mode_id} is not defined.")
-
-    monitor_modes.sort(key=lambda x: x.get("state"), reverse=True)
-
-    for monitor_config in monitor_modes:
+    for monitor_config in monitor_configs:
         if monitor_config.get("state") == StatusEnum.ON:
             set_monitor_on(
                 monitor_config.get("name"),
@@ -37,14 +33,10 @@ def mode(mode_id: str) -> None:
 
 @app.command(name="init")
 def init() -> None:
-    monitor_config = read_monitor_config()
-    monitor_mode = monitor_config.get("modes").get("laptop")
+    config = Config()
+    monitor_configs = config.get_default_monitor_mode_configs()
 
-    if monitor_mode is None:
-        set_monitor_defaults()
-        return
-
-    for monitor_config in monitor_mode:
+    for monitor_config in monitor_configs:
         if monitor_config.get("state") == StatusEnum.ON:
             set_monitor_on(
                 monitor_config.get("name"),

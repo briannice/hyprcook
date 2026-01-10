@@ -2,17 +2,13 @@ import json
 import os
 import sys
 
-from enum import StrEnum
 from pathlib import Path
 from typing import Dict, List, Optional, TypedDict
 
-
-class StatusEnum(StrEnum):
-    ON = "on"
-    OFF = "off"
+from core.base import StatusEnum
 
 
-class MonitorConfigModeConfig(TypedDict):
+class MonitorModeConfig(TypedDict):
     name: str
     state: StatusEnum
     resolution: Optional[str]
@@ -21,49 +17,63 @@ class MonitorConfigModeConfig(TypedDict):
 
 
 class MonitorConfig(TypedDict):
-    modes: Dict[str, List[MonitorConfigModeConfig]]
-    default: str
+    modes: Dict[str, List[MonitorModeConfig]]
+    default: Optional[str]
 
 
 class AppConfig(TypedDict):
     monitors: MonitorConfig
 
 
-def get_config_path() -> Path:
+class Config:
+
     CONFIG_DIR = "config"
     CONFIG_FILE_NAMES = ["default.jsonc", "default.json"]
 
-    runtime_dir = os.getenv("HYPRCOOK_HOME")
+    def __init__(self) -> None:
+        self.config: AppConfig
+        self.load()
 
-    if runtime_dir is None:
-        sys.exit("Environment variable 'HYPRCOOK_HOME' is not set.")
+    def get_config_path(self) -> Path:
+        home_dir = os.getenv("HYPRCOOK_HOME")
+        if home_dir is None:
+            sys.exit("Environment variable 'HYPRCOOK_HOME' is not set.")
 
-    dir_path = Path(runtime_dir)
+        dir_path = Path(home_dir)
+        if not dir_path.is_dir():
+            sys.exit(f"Hyprcook home directory '{dir_path}' does not exist.")
 
-    if not dir_path.is_dir():
-        sys.exit(f"Hyprcook home directory '{dir_path}' does not exist.")
+        dir_path = dir_path / self.CONFIG_DIR
+        if not dir_path.is_dir():
+            sys.exit(f"Hyprcook config directory '{dir_path}' does not exist.")
 
-    dir_path = dir_path / CONFIG_DIR
+        for file_name in self.CONFIG_FILE_NAMES:
+            file_path = dir_path / file_name
+            if file_path.is_file():
+                return file_path
 
-    if not dir_path.is_dir():
-        sys.exit(f"Hyprcook config directory '{dir_path}' does not exist.")
+        sys.exit("Configuration file does not exist.")
 
-    for file_name in CONFIG_FILE_NAMES:
-        file_path = dir_path / file_name
-        if file_path.is_file():
-            return file_path
+    def load(self) -> None:
+        config_path = self.get_config_path()
+        with open(config_path) as config_file:
+            config: AppConfig = json.load(config_file)
+            self.config = config
 
-    sys.exit("Configuration file does not exist.")
+    def get_monitor_mode_configs(self, mode_id: str) -> List[MonitorModeConfig]:
+        monitor_mode_configs = self.config.get("monitors").get("modes").get(mode_id)
+        if monitor_mode_configs is None:
+            sys.exit(f"Monitor mode config with id '{mode_id}' does not exist.")
 
+        return monitor_mode_configs
 
-def read_app_config() -> AppConfig:
-    config_path = get_config_path()
+    def get_default_monitor_mode_configs(self) -> List[MonitorModeConfig]:
+        default = self.config.get("monitors").get("default")
+        if default is None:
+            sys.exit(f"Default monitor mode config not found in config.")
 
-    with open(config_path) as config_file:
-        config: AppConfig = json.load(config_file)
-        return config
+        monitor_mode_configs = self.config.get("monitors").get("modes").get(default)
+        if monitor_mode_configs is None:
+            sys.exit(f"Monitor mode config does not exist for default id {default}.")
 
-
-def read_monitor_config() -> MonitorConfig:
-    app_config = read_app_config()
-    return app_config.get("monitors")
+        return monitor_mode_configs
