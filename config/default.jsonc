@@ -1,6 +1,6 @@
 {
   "monitors": {
-    "modes": {
+    "profiles": {
       "laptop": [
         { "name": "eDP-1", "state": "on", "scale": 1.5 },
         { "name": "HDMI-A-1", "state": "off" }
@@ -11,5 +11,15 @@
       ]
     },
     "default": "laptop"
+  },
+  "display": {
+    "gamma": {
+      "default": 80,
+      "night": 60
+    },
+    "temperature": {
+      "default": 7000,
+      "night": 4500
+    }
   }
 }

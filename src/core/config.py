@@ -1,79 +1,104 @@
 import json
 import os
-import sys
 
 from pathlib import Path
-from typing import Dict, List, Optional, TypedDict
+from typing import Dict, Optional, Required, TypedDict
 
-from core.base import StatusEnum
-
-
-class MonitorModeConfig(TypedDict):
-    name: str
-    state: StatusEnum
-    resolution: Optional[str]
-    position: Optional[str]
-    scale: Optional[float]
+from core.enums import StatusEnum
+from core.exceptions import HcError
 
 
-class MonitorConfig(TypedDict):
-    modes: Dict[str, List[MonitorModeConfig]]
-    default: Optional[str]
+class HcMonitorProfileConfig(TypedDict):
+    name: Required[str]
+    state: Required[StatusEnum]
+    resolution: str
+    position: str
+    scale: float
 
 
-class AppConfig(TypedDict):
-    monitors: MonitorConfig
+HcMonitorProfile = list[HcMonitorProfileConfig]
 
 
-class Config:
+class HcMonitorConfig(TypedDict, total=False):
+    profiles: Dict[str, HcMonitorProfile]
+    default: str
 
+
+class HcDisplayGammaConfig(TypedDict, total=False):
+    default: int
+    night: int
+
+
+class HcDisplayTempConfig(TypedDict, total=False):
+    default: int
+    night: int
+
+
+class HcDisplayConfig(TypedDict, total=False):
+    gamma: HcDisplayGammaConfig
+    temperature: HcDisplayTempConfig
+
+
+class HcAppConfig(TypedDict, total=False):
+    monitors: HcMonitorConfig
+    display: HcDisplayConfig
+
+
+class HcConfig:
     CONFIG_DIR = "config"
     CONFIG_FILE_NAMES = ["default.jsonc", "default.json"]
 
     def __init__(self) -> None:
-        self.config: AppConfig
-        self.load()
+        self._config_path = self._get_config_path()
+        self._config: HcAppConfig
+        self._load()
 
-    def get_config_path(self) -> Path:
+    def _get_config_path(self) -> Path:
         home_dir = os.getenv("HYPRCOOK_HOME")
         if home_dir is None:
-            sys.exit("Environment variable 'HYPRCOOK_HOME' is not set.")
+            raise HcError("Environment variable 'HYPRCOOK_HOME' is not set.")
 
         dir_path = Path(home_dir)
         if not dir_path.is_dir():
-            sys.exit(f"Hyprcook home directory '{dir_path}' does not exist.")
+            raise HcError(f"Hyprcook home directory '{dir_path}' does not exist.")
 
         dir_path = dir_path / self.CONFIG_DIR
         if not dir_path.is_dir():
-            sys.exit(f"Hyprcook config directory '{dir_path}' does not exist.")
+            raise HcError(f"Hyprcook config directory '{dir_path}' does not exist.")
 
         for file_name in self.CONFIG_FILE_NAMES:
             file_path = dir_path / file_name
             if file_path.is_file():
                 return file_path
 
-        sys.exit("Configuration file does not exist.")
+        raise HcError("Configuration file does not exist.")
 
-    def load(self) -> None:
-        config_path = self.get_config_path()
+    def _load(self) -> None:
+        config_path = self._get_config_path()
         with open(config_path) as config_file:
-            config: AppConfig = json.load(config_file)
-            self.config = config
+            config: HcAppConfig = json.load(config_file)
+            self._config = config
 
-    def get_monitor_mode_configs(self, mode_id: str) -> List[MonitorModeConfig]:
-        monitor_mode_configs = self.config.get("monitors").get("modes").get(mode_id)
-        if monitor_mode_configs is None:
-            sys.exit(f"Monitor mode config with id '{mode_id}' does not exist.")
+    def get_monitor_profile_by_id(self, profile_id: str) -> Optional[HcMonitorProfile]:
+        return self._config.get("monitors", {}).get("profiles", {}).get(profile_id)
 
-        return monitor_mode_configs
+    def get_monitor_default_profile_id(self) -> Optional[str]:
+        return self._config.get("monitors", {}).get("default")
 
-    def get_default_monitor_mode_configs(self) -> List[MonitorModeConfig]:
-        default = self.config.get("monitors").get("default")
-        if default is None:
-            sys.exit(f"Default monitor mode config not found in config.")
+    def get_display_default_gamma(self) -> Optional[int]:
+        return self._config.get("display", {}).get("gamma", {}).get("default")
 
-        monitor_mode_configs = self.config.get("monitors").get("modes").get(default)
-        if monitor_mode_configs is None:
-            sys.exit(f"Monitor mode config does not exist for default id {default}.")
+    def get_display_night_gamma(self) -> Optional[int]:
+        return self._config.get("display", {}).get("gamma", {}).get("night")
 
-        return monitor_mode_configs
+    def get_display_gamma_by_id(self, id: str) -> Optional[int]:
+        return self._config.get("display", {}).get("gamma", {}).get(id)
+
+    def get_display_default_temp(self) -> Optional[int]:
+        return self._config.get("display", {}).get("temperature", {}).get("default")
+
+    def get_display_night_temp(self) -> Optional[int]:
+        return self._config.get("display", {}).get("temperature", {}).get("night")
+
+    def get_display_temp_by_id(self, id: str) -> Optional[int]:
+        return self._config.get("display", {}).get("temperature", {}).get(id)

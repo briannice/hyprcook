@@ -1,64 +1,84 @@
 import json
 import os
-import sys
 
 from pathlib import Path
-from typing import TypedDict
+from typing import Optional, TypedDict
 
 
-class MonitorState(TypedDict, total=False):
-    mode: str
+class HcDisplayState(TypedDict, total=False):
+    gamma: int
+    temp: int
 
 
-class AppState(TypedDict, total=False):
-    monitor: MonitorState
+class HcMonitorState(TypedDict, total=False):
+    profile: str
 
 
-def get_state_file_path() -> Path:
+class HcAppState(TypedDict, total=False):
+    monitor: HcMonitorState
+    display: HcDisplayState
+
+
+class HcState:
     STATE_FILE_NAME = "hyprcook.json"
 
-    state_dir = os.getenv("XDG_RUNTIME_DIR")
+    def __init__(self) -> None:
+        self._state_path = self._get_state_path()
+        self._state: HcAppState
+        self._load()
 
-    if state_dir is None:
-        sys.exit("Environment variable 'XDG_RUNTIME_DIR' is not set.")
+    def _get_state_path(self) -> Path:
+        state_dir = os.getenv("XDG_RUNTIME_DIR")
+        if state_dir is None:
+            raise RuntimeError("Environment variable 'XDG_RUNTIME_DIR' is not set.")
 
-    state_path = Path(state_dir)
+        state_path = Path(state_dir)
+        if not state_path.is_dir():
+            raise RuntimeError("'XDG_RUNTIME_DIR' does not exist.")
 
-    if not state_path.is_dir():
-        sys.exit("User runtime directory 'XDG_RUNTIME_DIR' does not exist.")
+        return state_path / self.STATE_FILE_NAME
 
-    return state_path / STATE_FILE_NAME
+    def _load(self) -> None:
+        if not self._state_path.is_file():
+            self._state = {}
+            return
+        with open(self._state_path) as state_file:
+            state: HcAppState = json.load(state_file)
+            self._state = state
 
+    def save(self) -> None:
+        tmp = self._state_path.with_suffix(".tmp")
+        with open(tmp, "w") as f:
+            json.dump(self._state, f, indent=4)
+            f.write("\n")
+        tmp.replace(self._state_path)
 
-def read_app_state() -> AppState:
-    config_path = get_state_file_path()
+    def get_monitor_profile(self) -> Optional[str]:
+        return self._state.get("monitor", {}).get("profile")
 
-    if not config_path.is_file():
-        return {}
+    def set_monitor_profile(self, profile_id: str) -> None:
+        monitor_state = self._state.get("monitor")
+        if monitor_state is None:
+            self._state["monitor"] = {"profile": profile_id}
+        else:
+            monitor_state["profile"] = profile_id
 
-    with config_path.open() as file:
-        config: AppState = json.load(file)
-        return config
+    def get_display_gamma(self) -> Optional[int]:
+        return self._state.get("display", {}).get("gamma")
 
+    def set_display_gamma(self, n: int) -> None:
+        display_state = self._state.get("display")
+        if display_state is None:
+            self._state["display"] = {"gamma": n}
+        else:
+            display_state["gamma"] = n
 
-def read_monitor_state() -> MonitorState:
-    app_state = read_app_state()
-    monitor_state = app_state.get("monitor")
+    def get_display_temp(self) -> Optional[int]:
+        return self._state.get("display", {}).get("temp")
 
-    if monitor_state is None:
-        return {}
-
-    return monitor_state
-
-
-def write_app_state(state: AppState) -> None:
-    config_path = get_state_file_path()
-
-    with config_path.open("w") as file:
-        json.dump(state, file, indent=2)
-
-
-def write_monitor_state(monitor_state: MonitorState) -> None:
-    app_state = read_app_state()
-    app_state["monitor"] = monitor_state
-    write_app_state(app_state)
+    def set_display_temp(self, n: int) -> None:
+        display_state = self._state.get("display")
+        if display_state is None:
+            self._state["display"] = {"temp": n}
+        else:
+            display_state["temp"] = n
