@@ -1,13 +1,28 @@
 {
+  
   "monitors": {
     "profiles": {
       "laptop": [
-        { "name": "eDP-1", "state": "on", "scale": 1.5 },
-        { "name": "HDMI-A-1", "state": "off" }
+        {
+          "name": "eDP-1",
+          "state": "on",
+          "scale": 1.5
+        },
+        {
+          "name": "HDMI-A-1",
+          "state": "off"
+        }
       ],
       "smon": [
-        { "name": "eDP-1", "state": "off" },
-        { "name": "HDMI-A-1", "state": "on" }
+        {
+          "name": "eDP-1",
+          "state": "off"
+        },
+        {
+          "name": "HDMI-A-1",
+          "state": "on",
+          "scale": 2
+        }
       ]
     },
     "default": "laptop"
@@ -15,7 +30,8 @@
   "display": {
     "gamma": {
       "default": 80,
-      "night": 60
+      "night": 60,
+      "idle": 20
     },
     "temperature": {
       "default": 7000,

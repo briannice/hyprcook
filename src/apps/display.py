@@ -52,7 +52,6 @@ def mode(id: str) -> None:
         raise HcError(f"Invalid gamma value configured for id {id}: {gamma}")
 
     temp = config.get_display_temp_by_id(id)
-    print(temp)
     if temp is None:
         raise HcError(f"Temparature is not configured for id {id}.")
     if not display_service.validate_temp(temp):
@@ -64,3 +63,43 @@ def mode(id: str) -> None:
     state.set_display_gamma(gamma)
     state.set_display_temp(temp)
     state.save()
+
+
+@app.command("idle")
+def idle() -> None:
+    config = HcConfig()
+    state = HcState()
+    display_service = HcDisplayService()
+
+    gamma = config.get_display_gamma_by_id("idle")
+    if gamma is None:
+        raise HcError(f"Gamma is not configured for id {id}.")
+    if not display_service.validate_gamma(gamma):
+        raise HcError(f"Invalid gamma value configured for id {id}: {gamma}")
+
+    display_service.set_gamma(gamma)
+
+    temp = display_service.get_temp()
+    state.set_display_temp(temp)
+    state.save()
+
+
+@app.command("restore")
+def restore() -> None:
+    state = HcState()
+    display_service = HcDisplayService()
+
+    gamma = state.get_display_gamma()
+    if gamma is None:
+        raise HcError(f"Gamma state is not saved.")
+    if not display_service.validate_gamma(gamma):
+        raise HcError(f"Invalid saved value for gamma: {gamma}")
+
+    temp = state.get_display_temp()
+    if temp is None:
+        raise HcError(f"Temparature state is not saved.")
+    if not display_service.validate_temp(temp):
+        raise HcError(f"Invalid saved value for temperature: {temp}")
+
+    display_service.set_gamma(gamma)
+    display_service.set_temp(temp)
